@@ -6,7 +6,7 @@ import io.swagger.models.properties.*;
 import java.util.*;
 import java.io.File;
 
-public class TypescriptserverstubcaligrapherGenerator extends DefaultCodegen implements CodegenConfig {
+public class TypescriptServerStubCaligrapher extends DefaultCodegen implements CodegenConfig {
 
   // source folder where to write the files
   protected String sourceFolder = "src";
@@ -42,7 +42,7 @@ public class TypescriptserverstubcaligrapherGenerator extends DefaultCodegen imp
     return "Generates a TypescriptServerStubCaligrapher client library.";
   }
 
-  public TypescriptserverstubcaligrapherGenerator() {
+  public TypescriptServerStubCaligrapher() {
     super();
 
     // set the output folder here

@@ -21,7 +21,7 @@ At this point, you've likely generated a client setup.  It will include somethin
 |-- src
 |--- main
 |---- java
-|----- com.hassleless.codegen.TypescriptserverstubcaligrapherGenerator.java // generator file
+|----- com.hassleless.codegen.TypescriptServerStubCaligrapher.java // generator file
 |---- resources
 |----- TypescriptServerStubCaligrapher // template files
 |----- META-INF
