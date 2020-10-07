@@ -1,7 +1,11 @@
 package com.hassleless.codegen;
 
 import io.swagger.codegen.*;
+import io.swagger.codegen.languages.AbstractGoCodegen;
 import io.swagger.models.properties.*;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.io.File;
@@ -12,6 +16,13 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
   protected String sourceFolder = "src";
   protected String apiVersion = "1.0.0";
 
+  protected static Logger LOGGER = LoggerFactory.getLogger(AbstractGoCodegen.class);
+
+  protected boolean withXml = false;
+
+  protected String packageName = "swagger";
+
+
   /**
    * Configures the type of generator.
    * 
@@ -19,7 +30,7 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
    * @see     io.swagger.codegen.CodegenType
    */
   public CodegenType getTag() {
-    return CodegenType.CLIENT;
+    return CodegenType.SERVER;
   }
 
   /**
@@ -46,7 +57,7 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
     super();
 
     // set the output folder here
-    outputFolder = "generated-code/TypescriptServerStubCaligrapher";
+    outputFolder = "server-stub/typescript-express";
 
     /**
      * Models.  You can write model files using the modelTemplateFiles map.
@@ -56,7 +67,7 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
      */
     modelTemplateFiles.put(
       "model.mustache", // the template to use
-      ".sample");       // the extension for each file to write
+      ".ts");       // the extension for each file to write
 
     /**
      * Api classes.  You can write classes for each Api file with the apiTemplateFiles map.
@@ -65,7 +76,7 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
      */
     apiTemplateFiles.put(
       "api.mustache",   // the template to use
-      ".sample");       // the extension for each file to write
+      ".ts");       // the extension for each file to write
 
     /**
      * Template Location.  This is the location which templates will be read from.  The generator
@@ -76,20 +87,124 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
     /**
      * Api Package.  Optional, if needed, this can be used in templates
      */
-    apiPackage = "io.swagger.client.api";
+    apiPackage = "io.hassleless.server.controller";
 
     /**
      * Model Package.  Optional, if needed, this can be used in templates
      */
-    modelPackage = "io.swagger.client.model";
+    modelPackage = "io.hassleless.server.model";
 
+    /**
+     * Language specific types
+     */
+
+    languageSpecificPrimitives = new HashSet<String>(
+            Arrays.asList(
+                    "boolean",
+                    "number",
+                    "string",
+                    "array",
+                    "tuple",
+                    "enum",
+                    "any",
+                    "void",
+                    "object",
+                    "bigint",
+                    "Date",
+                    "File"
+            ));
+
+    instantiationTypes.clear();
+
+    typeMapping.clear();
+
+    typeMapping.put("integer", "number");
+    typeMapping.put("long", "bigint");
+    typeMapping.put("number", "number");
+    typeMapping.put("float", "number");
+    typeMapping.put("double", "number");
+    typeMapping.put("boolean", "boolean");
+    typeMapping.put("string", "string");
+    typeMapping.put("UUID", "string");
+    typeMapping.put("date", "Date");
+    typeMapping.put("DateTime", "Date");
+    typeMapping.put("password", "string");
+    typeMapping.put("File", "File");
+    typeMapping.put("file", "File");
+    // map binary to string as a workaround
+    // the correct solution is to use []byte
+    typeMapping.put("binary", "string");
+    typeMapping.put("ByteArray", "string");
+    typeMapping.put("object", "object");
     /**
      * Reserved words.  Override this with reserved words specific to your language
      */
-    reservedWords = new HashSet<String> (
-      Arrays.asList(
-        "sample1",  // replace with static values
-        "sample2")
+    reservedWords = new HashSet<String>(
+            Arrays.asList(
+                    "break",
+                    "case",
+                    "catch",
+                    "class",
+                    "const",
+                    "continue",
+                    "debugger",
+                    "default",
+                    "delete",
+                    "do",
+                    "else",
+                    "enum",
+                    "export",
+                    "extends",
+                    "false",
+                    "finally",
+                    "for",
+                    "function",
+                    "if",
+                    "import",
+                    "in",
+                    "instanceof",
+                    "new",
+                    "null",
+                    "return",
+                    "super",
+                    "switch",
+                    "this",
+                    "throw",
+                    "true",
+                    "try",
+                    "typeof",
+                    "var",
+                    "void",
+                    "while",
+                    "with",
+                    "as",
+                    "implements",
+                    "interface",
+                    "let",
+                    "package",
+                    "private",
+                    "protected",
+                    "public",
+                    "static",
+                    "yield",
+                    "any",
+                    "boolean",
+                    "constructor",
+                    "declare",
+                    "get",
+                    "module",
+                    "require",
+                    "number",
+                    "set",
+                    "string",
+                    "symbol",
+                    "type",
+                    "from",
+                    "of",
+                    "namespace",
+                    "async",
+                    "await"
+            )
     );
 
     /**
@@ -103,20 +218,11 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
      * entire object tree available.  If the input file has a suffix of `.mustache
      * it will be processed by the template engine.  Otherwise, it will be copied
      */
-    supportingFiles.add(new SupportingFile("myFile.mustache",   // the input template or file
-      "",                                                       // the destination folder, relative `outputFolder`
-      "myFile.sample")                                          // the output file
-    );
+//    supportingFiles.add(new SupportingFile("myFile.mustache",   // the input template or file
+//      "",                                                       // the destination folder, relative `outputFolder`
+//      "myFile.sample")                                          // the output file
+//    );
 
-    /**
-     * Language Specific Primitives.  These types will not trigger imports by
-     * the client generator
-     */
-    languageSpecificPrimitives = new HashSet<String>(
-      Arrays.asList(
-        "Type1",      // replace these with your types
-        "Type2")
-    );
   }
 
   /**
@@ -155,18 +261,20 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
    */
   @Override
   public String getTypeDeclaration(Property p) {
-    if(p instanceof ArrayProperty) {
+    if (p instanceof ArrayProperty) {
       ArrayProperty ap = (ArrayProperty) p;
       Property inner = ap.getItems();
-      return getSwaggerType(p) + "[" + getTypeDeclaration(inner) + "]";
-    }
-    else if (p instanceof MapProperty) {
-      MapProperty mp = (MapProperty) p;
-      Property inner = mp.getAdditionalProperties();
-      return getSwaggerType(p) + "[String, " + getTypeDeclaration(inner) + "]";
+      return getSwaggerType(p) + "<" + getTypeDeclaration(inner) + ">";
+    } else if (p instanceof MapProperty) {
+        MapProperty mp = (MapProperty) p;
+        Property inner = mp.getAdditionalProperties();
+        return "{ [key: string]: " + getTypeDeclaration(inner) + "; }";
+      } else if (p instanceof FileProperty) {
+          return "any";
     }
     return super.getTypeDeclaration(p);
   }
+
 
   /**
    * Optional - swagger type conversion.  This is used to map swagger types in a `Property` into 
@@ -182,10 +290,48 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
     if(typeMapping.containsKey(swaggerType)) {
       type = typeMapping.get(swaggerType);
       if(languageSpecificPrimitives.contains(type))
-        return toModelName(type);
+        return type;
     }
     else
       type = swaggerType;
     return toModelName(type);
   }
+
+  @Override
+  public String toModelName(String name) {
+    name = sanitizeName(name); // FIXME: a parameter should not be assigned. Also declare the methods parameters as 'final'.
+
+    if (!StringUtils.isEmpty(modelNamePrefix)) {
+      name = modelNamePrefix + "_" + name;
+    }
+
+    if (!StringUtils.isEmpty(modelNameSuffix)) {
+      name = name + "_" + modelNameSuffix;
+    }
+
+    // model name cannot use reserved keyword, e.g. return
+    if (isReservedWord(name)) {
+      String modelName = camelize("model_" + name);
+      LOGGER.warn(name + " (reserved word) cannot be used as model name. Renamed to " + modelName);
+      return modelName;
+    }
+
+    // model name starts with number
+    if (name.matches("^\\d.*")) {
+      String modelName = camelize("model_" + name); // e.g. 200Response => Model200Response (after camelize)
+      LOGGER.warn(name + " (model name starts with number) cannot be used as model name. Renamed to " + modelName);
+      return modelName;
+    }
+
+    if (languageSpecificPrimitives.contains(name)) {
+      String modelName = camelize("model_" + name);
+      LOGGER.warn(name + " (model name matches existing language type) cannot be used as a model name. Renamed to " + modelName);
+      return modelName;
+    }
+
+    // camelize the model name
+    // phone_number => PhoneNumber
+    return camelize(name);
+  }
+
 }
