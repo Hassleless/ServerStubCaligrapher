@@ -1,7 +1,6 @@
 package com.hassleless.codegen;
 
 import io.swagger.codegen.*;
-import io.swagger.codegen.languages.AbstractGoCodegen;
 import io.swagger.models.properties.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -16,11 +15,15 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
   protected String sourceFolder = "src";
   protected String apiVersion = "1.0.0";
 
-  protected static Logger LOGGER = LoggerFactory.getLogger(AbstractGoCodegen.class);
+  protected static Logger LOGGER = LoggerFactory.getLogger(TypescriptServerStubCaligrapher.class);
 
   protected boolean withXml = false;
 
   protected String packageName = "swagger";
+  public static final String TAGGED_UNIONS ="taggedUnions";
+  protected HashSet<String> languageGenericTypes;
+
+  private boolean taggedUnions = false;
 
 
   /**
@@ -98,13 +101,18 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
      * Language specific types
      */
 
+    languageGenericTypes = new HashSet<String>(Arrays.asList(
+            "Array"
+    ));
+
     languageSpecificPrimitives = new HashSet<String>(
             Arrays.asList(
                     "boolean",
                     "number",
+                    "Boolean",
                     "string",
-                    "array",
                     "tuple",
+                    "Array",
                     "enum",
                     "any",
                     "void",
@@ -119,11 +127,12 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
     typeMapping.clear();
 
     typeMapping.put("integer", "number");
+    typeMapping.put("array","Array");
     typeMapping.put("long", "bigint");
     typeMapping.put("number", "number");
     typeMapping.put("float", "number");
     typeMapping.put("double", "number");
-    typeMapping.put("boolean", "boolean");
+    typeMapping.put("boolean", "Boolean");
     typeMapping.put("string", "string");
     typeMapping.put("UUID", "string");
     typeMapping.put("date", "Date");
@@ -244,6 +253,15 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
     return outputFolder + "/" + sourceFolder + "/" + modelPackage().replace('.', File.separatorChar);
   }
 
+  @Override
+  public void processOpts() {
+    super.processOpts();
+    supportingFiles.add(new SupportingFile("models.mustache", sourceFolder + "/" + modelPackage().replace('.', File.separatorChar), "models.ts"));
+    if (additionalProperties.containsKey(TAGGED_UNIONS)) {
+      taggedUnions = Boolean.parseBoolean(additionalProperties.get(TAGGED_UNIONS).toString());
+    }
+  }
+
   /**
    * Location to write api files.  You can use the apiPackage() as defined when the class is
    * instantiated
@@ -275,30 +293,31 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
     return super.getTypeDeclaration(p);
   }
 
-
   /**
-   * Optional - swagger type conversion.  This is used to map swagger types in a `Property` into 
+   * Optional - swagger type conversion.  This is used to map swagger types in a `Property` into
    * either language specific types via `typeMapping` or into complex models if there is not a mapping.
    *
    * @return a string value of the type or complex model for this property
    * @see io.swagger.models.properties.Property
    */
+
   @Override
   public String getSwaggerType(Property p) {
     String swaggerType = super.getSwaggerType(p);
     String type = null;
-    if(typeMapping.containsKey(swaggerType)) {
+    if (typeMapping.containsKey(swaggerType)) {
       type = typeMapping.get(swaggerType);
-      if(languageSpecificPrimitives.contains(type))
+      if (languageSpecificPrimitives.contains(type))
         return type;
-    }
-    else
+    } else
       type = swaggerType;
     return toModelName(type);
   }
 
+
   @Override
   public String toModelName(String name) {
+    LOGGER.warn("Model name : " +  name);
     name = sanitizeName(name); // FIXME: a parameter should not be assigned. Also declare the methods parameters as 'final'.
 
     if (!StringUtils.isEmpty(modelNamePrefix)) {
@@ -331,7 +350,55 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
 
     // camelize the model name
     // phone_number => PhoneNumber
-    return camelize(name);
+    String convertedModelName = camelize(name);
+    LOGGER.warn("Converted Model Name : " + convertedModelName);
+    return convertedModelName;
+  }
+
+  @Override
+  public String toModelFilename(String name) {
+    // should be the same as the model name
+    return toModelName(name);
+  }
+
+  @Override
+  public Map<String, Object> postProcessAllModels(Map<String, Object> objs) {
+    Map<String, Object> result = super.postProcessAllModels(objs);
+
+    for (Map.Entry<String, Object> entry : result.entrySet()) {
+      Map<String, Object> inner = (Map<String, Object>) entry.getValue();
+      List<Map<String, Object>> models = (List<Map<String, Object>>) inner.get("models");
+      for (Map<String, Object> mo : models) {
+        CodegenModel cm = (CodegenModel) mo.get("model");
+        if (taggedUnions) {
+          mo.put(TAGGED_UNIONS, true);
+          if (cm.discriminator != null && cm.children != null) {
+            for (CodegenModel child : cm.children) {
+              cm.imports.add(child.classname);
+            }
+          }
+          if (cm.parent != null) {
+            cm.imports.remove(cm.parent);
+          }
+        }
+        // Add additional filename information for imports
+        mo.put("tsImports", toTsImports(cm, cm.imports));
+      }
+    }
+    return result;
+  }
+
+  private List<Map<String, String>> toTsImports(CodegenModel cm, Set<String> imports) {
+    List<Map<String, String>> tsImports = new ArrayList<>();
+    for (String im : imports) {
+      if (!im.equals(cm.classname)) {
+        HashMap<String, String> tsImport = new HashMap<>();
+        tsImport.put("classname", im);
+        tsImport.put("filename", toModelFilename(im));
+        tsImports.add(tsImport);
+      }
+    }
+    return tsImports;
   }
 
 }
