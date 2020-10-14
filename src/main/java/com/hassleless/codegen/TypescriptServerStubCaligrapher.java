@@ -102,7 +102,7 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
      */
 
     languageGenericTypes = new HashSet<String>(Arrays.asList(
-            "Array"
+            "Array","Map"
     ));
 
     languageSpecificPrimitives = new HashSet<String>(
@@ -111,6 +111,7 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
                     "number",
                     "Boolean",
                     "string",
+                    "Map",
                     "tuple",
                     "Array",
                     "enum",
@@ -133,6 +134,7 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
     typeMapping.put("float", "number");
     typeMapping.put("double", "number");
     typeMapping.put("boolean", "Boolean");
+    typeMapping.put("map", "Map");
     typeMapping.put("string", "string");
     typeMapping.put("UUID", "string");
     typeMapping.put("date", "Date");
@@ -286,7 +288,7 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
     } else if (p instanceof MapProperty) {
         MapProperty mp = (MapProperty) p;
         Property inner = mp.getAdditionalProperties();
-        return "{ [key: string]: " + getTypeDeclaration(inner) + "; }";
+        return "Map<string, " + getTypeDeclaration(inner) + ">";
       } else if (p instanceof FileProperty) {
           return "any";
     }
