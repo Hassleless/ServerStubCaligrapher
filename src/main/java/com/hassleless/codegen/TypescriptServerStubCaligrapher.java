@@ -258,7 +258,6 @@ public class TypescriptServerStubCaligrapher extends DefaultCodegen implements C
   @Override
   public void processOpts() {
     super.processOpts();
-    supportingFiles.add(new SupportingFile("models.mustache", sourceFolder + "/" + modelPackage().replace('.', File.separatorChar), "models.ts"));
     if (additionalProperties.containsKey(TAGGED_UNIONS)) {
       taggedUnions = Boolean.parseBoolean(additionalProperties.get(TAGGED_UNIONS).toString());
     }

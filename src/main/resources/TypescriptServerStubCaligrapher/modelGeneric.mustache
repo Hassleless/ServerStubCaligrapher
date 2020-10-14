@@ -1,4 +1,15 @@
 
+export interface I{{classname}}Props {{#parent}}extends {{{parent}}} {{/parent}}{ {{>modelGenericAdditionalProperties}}
+{{#vars}}
+    {{#description}}
+    /**
+     * {{{description}}}
+     */
+    {{/description}}
+    {{#isReadOnly}}readonly {{/isReadOnly}}{{name}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{datatype}}}{{/isEnum}};
+{{/vars}}
+}
+
 export class {{classname}} {{#parent}}extends {{{parent}}} {{/parent}}{ {{>modelGenericAdditionalProperties}}
 {{#vars}}
     {{#description}}
@@ -8,4 +19,12 @@ export class {{classname}} {{#parent}}extends {{{parent}}} {{/parent}}{ {{>model
     {{/description}}
     {{#isReadOnly}}readonly {{/isReadOnly}}{{name}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{datatype}}}{{/isEnum}};
 {{/vars}}
-}{{>modelGenericEnums}}
+
+constructor(props: I{{classname}}Props){
+{{#vars}}
+    this.{{name}} = props.{{name}};
+{{/vars}}
+}
+}
+
+{{>modelGenericEnums}}
